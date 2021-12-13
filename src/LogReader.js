@@ -3,7 +3,7 @@ import { createInterface } from 'readline'
 import { parseField, dictAddfname } from './helper.js'
 import { Worker } from 'worker_threads'
 
-const WORKER_COUNT = parseInt(process.env.WORKER_COUNT || 4)
+const WORKER_COUNT = parseInt(process.env.WORKER_COUNT) || 4
 const THREADED = WORKER_COUNT !== 0
 
 export class LogReader {

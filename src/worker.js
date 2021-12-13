@@ -6,7 +6,7 @@ let processed = 0
 
 parentPort.on('message', line => {
     const finished = line === null
-    if (line === null) {
+    if (finished) {
         parentPort.postMessage({ dict, processed })
         parentPort.close()
     } else {
