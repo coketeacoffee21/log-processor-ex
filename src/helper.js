@@ -4,16 +4,16 @@ export const getExt = (nm) => {
     const nmParts = nm.split(DOT)
     if (nmParts.length > 1) {
         const ext = nmParts.pop()
-        return [nmParts.join(DOT), ext.toLowerCase()]
+        return [nmParts.join(DOT), ext]
     } else {
         return [nm, '']
     }
 }
 
-export const parseField = (jsonStr) => {
+export const parseField = (jsonStr, isCaseSensistive) => {
     try {
         const entry = JSON.parse(jsonStr)
-        return getExt(entry.nm)
+        return isCaseSensistive ? getExt(entry.nm) : getExt(entry.nm).map(it => it.toLowerCase())
     } catch (err) {
         console.error(err)
         throw err

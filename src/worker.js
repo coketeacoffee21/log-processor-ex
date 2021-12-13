@@ -1,4 +1,4 @@
-import { parentPort } from 'worker_threads'
+import { parentPort, workerData } from 'worker_threads'
 import { parseField, dictAddfname } from './helper.js'
 
 let dict = new Map()
@@ -12,7 +12,7 @@ parentPort.on('message', line => {
         parentPort.close()
     } else {
         try {
-            const [fname, ext] = parseField(line)
+            const [fname, ext] = parseField(line, workerData.isCaseSensistive)
             dictAddfname(dict, ext, fname)
             processed++
         } catch (err) {

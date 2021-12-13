@@ -2,7 +2,7 @@ import { LogReader } from './LogReader.js'
 
 async function main() {
     // const reader = new LogReader('../logs/16000k-normal-real.txt')
-    const reader = new LogReader('../logs/log2.txt')
+    const reader = new LogReader('../logs/log1.txt')
     const start = +new Date()
     try {
         const dict = await reader.process()

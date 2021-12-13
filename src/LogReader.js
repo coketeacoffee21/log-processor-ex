@@ -3,8 +3,9 @@ import { createInterface } from 'readline'
 import { parseField, dictAddfname } from './helper.js'
 import { Worker } from 'worker_threads'
 
-const WORKER_COUNT = parseInt(process.env.WORKER_COUNT) || 4
+const WORKER_COUNT = parseInt(process.env.WORKER_COUNT) ?? 4
 const THREADED = WORKER_COUNT !== 0
+const CASE_SENSISTIVE = process.env.CASE_SENSISTIVE === 'true'
 
 export class LogReader {
     logFile = null
@@ -19,7 +20,7 @@ export class LogReader {
     constructor(logPath) {
         this.logFile = new URL(logPath, import.meta.url)
         for (let i = 0; i < WORKER_COUNT && THREADED; i++) {
-            this.workers[i] = new Worker(new URL('./worker.js', import.meta.url))
+            this.workers[i] = new Worker(new URL('./worker.js', import.meta.url), { workerData: { isCaseSensistive: CASE_SENSISTIVE } })
             this.workers[i].on('error', code => new Error(`Worker error, exit code ${code}`))
             this.workers[i].on('message', result => {
                 const { dict: subDict, processed, error } = result
@@ -48,7 +49,7 @@ export class LogReader {
         if (THREADED) {
             this.workers[this.lineCount++ % WORKER_COUNT].postMessage(line)
         } else {
-            const [fname, ext] = parseField(line)
+            const [fname, ext] = parseField(line, CASE_SENSISTIVE)
             dictAddfname(this.dict, ext, fname)
             this.processCount++
             this.lineCount++
@@ -81,7 +82,9 @@ export class LogReader {
     getInfo() {
         return {
             lineCount: this.lineCount,
-            worker: WORKER_COUNT
+            worker: WORKER_COUNT,
+            THREADED,
+            caseSensistive: CASE_SENSISTIVE
         }
     }
 
