@@ -15,10 +15,8 @@ export const parseField = (jsonStr) => {
         const entry = JSON.parse(jsonStr)
         return getExt(entry.nm)
     } catch (err) {
-        if (err instanceof SyntaxError) {
-            console.log('err', err.message)
-        }
-        // TODO: error handling
+        console.error(err)
+        throw err
     }
 }
 

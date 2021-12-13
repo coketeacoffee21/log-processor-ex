@@ -22,10 +22,14 @@ export class LogReader {
             this.workers[i] = new Worker(new URL('./worker.js', import.meta.url))
             this.workers[i].on('error', code => new Error(`Worker error, exit code ${code}`))
             this.workers[i].on('message', result => {
-                const { dict: subDict, processed } = result
-                this.mergeSubDict(subDict)
-                this.processCount = this.processCount + processed
-                this.resultResolve()
+                const { dict: subDict, processed, error } = result
+                if (error === null) {
+                    this.mergeSubDict(subDict)
+                    this.processCount = this.processCount + processed
+                    this.resultResolve()
+                } else {
+                    this.promiseReject(error)
+                }
             })
         }
     }
@@ -57,7 +61,6 @@ export class LogReader {
             this.promiseReject = reject
             const filestream = createReadStream(this.logFile, { encoding: 'utf-8' })
             const lineReader = createInterface({ input: filestream })
-            // lineReader.on('error', (err) => reject(err)) Error handling
             lineReader.on('line', line => this.lineHandler(line))
             lineReader.on('close', () => {
                 this.readFinished = true
@@ -73,10 +76,6 @@ export class LogReader {
         if (this.readFinished && this.lineCount === this.processCount) {
             this.promiseResolve(this.dict)
         }
-    }
-
-    getLineCount() {
-        return this.lineCount
     }
 
     getInfo() {
