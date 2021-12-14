@@ -1,8 +1,8 @@
 import { LogReader } from './LogReader.js'
-
+import path from 'path'
 const WORKER_COUNT = parseInt(process.env.WORKER_COUNT) ?? 4
 const CASE_SENSISTIVE = process.env.CASE_SENSISTIVE === 'true'
-const filepath = process.argv[2]
+const filepath = path.resolve(process.argv[2]);
 
 async function main() {
     let dict
