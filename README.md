@@ -5,13 +5,16 @@
 ### To Run:
 
 ```
+# install
+npm install
+
 # Start log processor with worker thread
-npm run start
-CASE_SENSISTIVE=true WORKER_COUNT=4 node src/index.js
+npm run start ../logs/log1.txt
+CASE_SENSISTIVE=true WORKER_COUNT=4 node src/index.js ../logs/log1.txt
 
 # Start log processor single threaded
-npm run start:single
-CASE_SENSISTIVE=true WORKER_COUNT=0 node src/index.js
+npm run start:single ../logs/log1.txt
+CASE_SENSISTIVE=true WORKER_COUNT=0 node src/index.js ../logs/log1.txt
 
 # run test
 npm run test

@@ -2,10 +2,11 @@ import { LogReader } from './LogReader.js'
 
 const WORKER_COUNT = parseInt(process.env.WORKER_COUNT) ?? 4
 const CASE_SENSISTIVE = process.env.CASE_SENSISTIVE === 'true'
+const filepath = process.argv[2]
 
 async function main() {
     let dict
-    const reader = new LogReader('../logs/log1.txt', CASE_SENSISTIVE)
+    const reader = new LogReader(filepath, CASE_SENSISTIVE)
     reader.initWorkerPool(WORKER_COUNT)
     try {
         dict = await reader.process()
