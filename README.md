@@ -2,14 +2,16 @@
 1. Extract extensions, and count unique files per extension
 
 
-### TO RUN:
+### To Run:
 
 ```
-# Start log processor
+# Start log processor with worker thread
 npm run start
+CASE_SENSISTIVE=true WORKER_COUNT=4 node src/index.js
 
 # Start log processor single threaded
 npm run start:single
+CASE_SENSISTIVE=true WORKER_COUNT=0 node src/index.js
 
 # run test
 npm run test
@@ -39,7 +41,7 @@ npm run test:coverage
 │                          │           │                      │                       │
 │                          │           │                      │                       │
 │                          │  JSON     │    Reducer 3         │                       │
-│                          ├──────────►│                      ├── ────────────────────►
+│                          ├──────────►│                      ├──-────────────────────►
 │                          │           │                      │                       │
 │                          │           └──────────────────────┘                       │
 │                          │                                                          │
