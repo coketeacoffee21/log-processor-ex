@@ -1,5 +1,4 @@
 node_modules
-generate.js
 logs
 .vscode
 .nyc_output/
