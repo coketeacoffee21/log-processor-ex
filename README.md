@@ -2,7 +2,7 @@
 1. Extract extensions, and count unique files per extension
 
 
-Some basic Git commands are:
+### TO RUN:
 
 ```
 # Start log processor
@@ -13,8 +13,8 @@ npm run start:single
 
 # run test
 npm run test
+npm run test:coverage
 ```
-
 
 ### Design
 ```
@@ -49,3 +49,4 @@ npm run test
 │                          │
 └──────────────────────────┘
 ```
+
