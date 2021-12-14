@@ -1,21 +1,28 @@
 const DOT = '.'
+export const NO_EXT_NAME = ''
 
-export const getExt = (nm) => {
+export const getNameExt = (nm) => {
     const nmParts = nm.split(DOT)
-    if (nmParts.length > 1) {
-        const ext = nmParts.pop()
+    const ext = nmParts.pop()
+    const fname = nmParts.join(DOT)
+
+    if (nmParts.length > 0 && fname.length && ext !== NO_EXT_NAME) {
         return [nmParts.join(DOT), ext]
     } else {
-        return [nm, '']
+        return [nm, NO_EXT_NAME]
     }
 }
 
 export const parseField = (jsonStr, isCaseSensistive) => {
     try {
         const entry = JSON.parse(jsonStr)
-        return isCaseSensistive ? getExt(entry.nm) : getExt(entry.nm).map(it => it.toLowerCase())
+        if ('nm' in entry) {
+            return isCaseSensistive ? getNameExt(entry.nm) : getNameExt(entry.nm).map(it => it.toLowerCase())
+        } else {
+            throw new TypeError('nm field does not exist')
+        }
     } catch (err) {
-        console.error(err)
+        console.error(`Error Caught for line:'${jsonStr}'\n`, err)
         throw err
     }
 }

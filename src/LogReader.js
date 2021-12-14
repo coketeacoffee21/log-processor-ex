@@ -1,41 +1,38 @@
-import { createReadStream } from 'fs'
-import { createInterface } from 'readline'
+import fs from 'fs'
+import readline from 'readline'
 import { parseField, dictAddfname } from './helper.js'
-import { Worker } from 'worker_threads'
-
-const WORKER_COUNT = parseInt(process.env.WORKER_COUNT) ?? 4
-const THREADED = WORKER_COUNT !== 0
-const CASE_SENSISTIVE = process.env.CASE_SENSISTIVE === 'true'
+import WorkerThread from 'worker_threads'
 
 export class LogReader {
     logFile = null
+    expectedWorkerCount = 0
+    isCaseSensistive = true
+    workers = []
     dict = new Map()
+    readFinished = false
     lineCount = 0
     processCount = 0
-    workers = []
+    errorCount = 0
     promiseResolve = null
     promiseReject = null
-    readFinished = false
 
-    constructor(logPath) {
+    constructor(logPath, isCaseSensistive) {
+        this.isCaseSensistive = isCaseSensistive
         this.logFile = new URL(logPath, import.meta.url)
-        for (let i = 0; i < WORKER_COUNT && THREADED; i++) {
-            this.workers[i] = new Worker(new URL('./worker.js', import.meta.url), { workerData: { isCaseSensistive: CASE_SENSISTIVE } })
-            this.workers[i].on('error', code => new Error(`Worker error, exit code ${code}`))
-            this.workers[i].on('message', result => {
-                const { dict: subDict, processed, error } = result
-                if (error === null) {
-                    this.mergeSubDict(subDict)
-                    this.processCount = this.processCount + processed
-                    this.resultResolve()
-                } else {
-                    this.promiseReject(error)
-                }
-            })
-        }
     }
 
-    mergeSubDict(subDict) {
+    initWorkerPool(expectedWorkerCount) {
+        this.expectedWorkerCount = expectedWorkerCount
+        for (let i = 0; i < this.expectedWorkerCount; i++) {
+            this.workers[i] = new WorkerThread.Worker(new URL('./reducer.js', import.meta.url), { workerData: { isCaseSensistive: this.isCaseSensistive } })
+            this.workers[i].on('error', code => new Error(`Worker error, exit code ${code}`))
+            this.workers[i].on('message', result => this.mergeSubResult(result))
+        }
+        return this.workers
+    }
+
+    mergeSubResult(result) {
+        const { dict: subDict, processCount, errorCount } = result
         for (const [ext, subset] of subDict.entries()) {
             const names = this.dict.get(ext) ?? new Set()
             for (let item of subset) {
@@ -43,15 +40,22 @@ export class LogReader {
             }
             this.dict.set(ext, names)
         }
+        this.processCount = this.processCount + processCount
+        this.errorCount = this.errorCount + errorCount
+        this.resultResolve()
     }
 
     lineHandler(line) {
-        if (THREADED) {
-            this.workers[this.lineCount++ % WORKER_COUNT].postMessage(line)
+        if (this.workers.length > 0) {
+            this.workers[this.lineCount++ % this.workers.length].postMessage(line)
         } else {
-            const [fname, ext] = parseField(line, CASE_SENSISTIVE)
-            dictAddfname(this.dict, ext, fname)
-            this.processCount++
+            try {
+                const [fname, ext] = parseField(line, this.isCaseSensistive)
+                dictAddfname(this.dict, ext, fname)
+                this.processCount++
+            } catch (err) {
+                this.errorCount++
+            }
             this.lineCount++
         }
     }
@@ -60,31 +64,40 @@ export class LogReader {
         return new Promise((resolve, reject) => {
             this.promiseResolve = resolve
             this.promiseReject = reject
-            const filestream = createReadStream(this.logFile, { encoding: 'utf-8' })
-            const lineReader = createInterface({ input: filestream })
+            const filestream = fs.createReadStream(this.logFile, { encoding: 'utf-8' })
+            const lineReader = readline.createInterface({ input: filestream })
             lineReader.on('line', line => this.lineHandler(line))
-            lineReader.on('close', () => {
-                this.readFinished = true
-                for (let i = 0; i < this.workers.length; i++) {
-                    this.workers[i].postMessage(null)
-                }
-                this.resultResolve()
-            })
+            lineReader.on('close', () => this.signalFinished())
         })
     }
 
+    signalFinished() {
+        this.readFinished = true
+        for (let i = 0; i < this.workers.length; i++) {
+            this.workers[i].postMessage(null)
+        }
+        this.resultResolve()
+    }
+
     resultResolve() {
-        if (this.readFinished && this.lineCount === this.processCount) {
-            this.promiseResolve(this.dict)
+        if (this.readFinished && this.lineCount === (this.processCount + this.errorCount)) {
+            if (this.errorCount > 0) {
+                this.promiseReject(this.dict)
+            } else {
+                this.promiseResolve(this.dict)
+            }
         }
     }
 
     getInfo() {
         return {
             lineCount: this.lineCount,
-            worker: WORKER_COUNT,
-            THREADED,
-            caseSensistive: CASE_SENSISTIVE
+            processCount: this.processCount,
+            errorCount: this.errorCount,
+            expectedWorkerCount: this.expectedWorkerCount,
+            workerCount: this.workers.length,
+            threaded: this.workers.length > 0,
+            isCaseSensistive: this.isCaseSensistive
         }
     }
 
