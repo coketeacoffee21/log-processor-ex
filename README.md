@@ -23,7 +23,7 @@ npm run test:coverage
 
 ### Design
 With N Reducers, main thread distributes JSON entries evenly.  
-Each reducer output their intermediate result for final aggregate
+Each reducer outputs it's intermediate result for final aggregation
 ```
  ┌────────────────────┐    Generate intermediate result per reducer
  │                    │           ┌──────────────────────┐
