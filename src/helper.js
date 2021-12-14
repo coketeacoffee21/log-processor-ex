@@ -7,7 +7,7 @@ export const getNameExt = (nm) => {
     const fname = nmParts.join(DOT)
 
     if (nmParts.length > 0 && fname.length && ext !== NO_EXT_NAME) {
-        return [nmParts.join(DOT), ext]
+        return [fname, ext]
     } else {
         return [nm, NO_EXT_NAME]
     }
