@@ -58,3 +58,16 @@ Each reducer outputs it's intermediate result for final aggregation
 
 ```
 
+### Data structure of intermediate & final result
+For values in 'nm' field
+```
+foobar.txt
+helloworld.txt
+file.tar.gz
+```
+
+HashMap<String, Set<String>>
+| Key | Value |
+| --- | --- |
+| 'txt' | Set('foobar', 'helloworld') |
+| 'gz' | Set('file.tar') |
